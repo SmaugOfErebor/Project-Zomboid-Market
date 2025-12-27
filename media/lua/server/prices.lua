@@ -3,3 +3,5 @@ ItemPrices = {
     ["Base.RippedSheets"] = 1,
     ["Base.RippedSheetsDirty"] = 1
 }
+
+return true

@@ -1,3 +1,5 @@
+require "prices"
+
 -- Returns the currency balance for the specified player.
 -- Ensures that the player has currency data.
 function GetBalance(player)
@@ -10,7 +12,10 @@ end
 
 -- Modifies the given player's currency balance by the specified amount.
 function ModifyBalance(player, amount)
-    local data = GetBalance(player)
+    local data = player:getModData()
+    if not data.currency then
+        data.currency = 0
+    end
     data.currency = data.currency + amount
 end
 
@@ -28,13 +33,13 @@ function SellItem(player, itemType)
     -- Ensure that there is a price definition for this item.
     local price = ItemPrices[itemType] or 0
     if price <= 0 then
-        player.sendChatMessage("That item cannot be sold.")
+        player:sendChatMessage("That item cannot be sold.")
         return
     end
 
     -- Remove the item from the player's inventory and imburse the player accordingly.
     inventory:Remove(item)
-    AddBalance(player, price)
+    ModifyBalance(player, price)
     player:sendChatMessage("Sold " .. itemType .. " for " .. price)
 end
 
@@ -43,14 +48,14 @@ function BuyItem(player, itemType)
     -- Ensure that there is a price definition for this item.
     local price = ItemPrices[itemType] or 0
     if price <= 0 then
-        player.sendChatMessage("That item cannot be purchased.")
+        player:sendChatMessage("That item cannot be purchased.")
         return
     end
 
     -- Ensure that the player actually has the required balance to make the purchase.
     local balance = GetBalance(player)
     if balance < price then
-        player.sendChatMessage("You don't have enough money to purchase that item. Price: " .. price)
+        player:sendChatMessage("You don't have enough money to purchase that item. Price: " .. price)
         return
     end
 
@@ -58,13 +63,13 @@ function BuyItem(player, itemType)
     local inventory = player:getInventory()
     local purchasedItem = inventory:AddItem(itemType)
     if not purchasedItem then
-        player.sendChatMessage("Failed to add item to your inventory. You will not be charged.")
+        player:sendChatMessage("Failed to add item to your inventory. You will not be charged.")
         return
     end
 
     -- Take the corresponding amount of currency from the player's balance.
     ModifyBalance(player, -price)
-    player.sendChatMessage("Purchased " .. itemType .. " for " .. price)
+    player:sendChatMessage("Purchased " .. itemType .. " for " .. price)
 end
 
 Events.OnPlayerChat.Add(function(player, message)
@@ -84,7 +89,7 @@ Events.OnPlayerChat.Add(function(player, message)
     end
 
     -- The player wants to buy an item.
-    if cmd == "/buy" and args[2] then
+    if cmd == "/buy" then
         if not args[2] then
             player:sendChatMessage("You must specify the item type to purchase.")
             return false
