@@ -1,5 +1,3 @@
-require "prices"
-
 -- Returns the currency balance for the specified player.
 -- Ensures that the player has currency data.
 function GetBalance(player)
