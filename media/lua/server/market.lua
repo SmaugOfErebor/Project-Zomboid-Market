@@ -64,7 +64,7 @@ function BuyItem(player, itemType)
 
     -- Take the corresponding amount of currency from the player's balance.
     ModifyBalance(player, -price)
-    player.sendChatMessage("Purchased " .. itemType " for " .. price)
+    player.sendChatMessage("Purchased " .. itemType .. " for " .. price)
 end
 
 Events.OnPlayerChat.Add(function(player, message)
