@@ -63,6 +63,31 @@ function BuyItem(player, item)
     player:sendChatMessage("Purchased " .. item:getType() .. " for " .. price)
 end
 
+-- Scans a player's backpack for how many rags, dirty rags, and all other item types.
+function scanBackpack(backpack)
+    local inv = backpack:getInventory()
+    local items = inv:getItems()
+
+    local ragCount = 0
+    local dirtyRagCount = 0
+    local remainingItems = {}
+
+    for i = 0, items:size() - 1 do
+        local item = items:get(i)
+        local fullType = item:getFullType()
+
+        if fullType == "Base.RippedSheets" then
+            ragCount = ragCount + 1
+        elseif fullType == "Base.RippedSheetsDirty" then
+            dirtyRagCount = dirtyRagCount + 1
+        else
+            table.insert(remainingItems, item)
+        end
+    end
+
+    return ragCount, dirtyRagCount, remainingItems
+end
+
 Events.EveryTenMinutes.Add(function()
     local players = getOnlinePlayers()
     if not players then
@@ -75,55 +100,29 @@ Events.EveryTenMinutes.Add(function()
     for i = 0, players:size() - 1 do
         local player = players:get(i)
 
+        print("[PZ Market] Scanning " .. player:getDisplayName() .. "'s inventory.")
+
         local backpack = player:getClothingItem_Back()
         if backpack then
-            local inv = backpack:getInventory()
-            local items = inv:getItems()
+            print("[PZ Market] Player " .. player:getDisplayName() .. " is wearing a backpack.")
+            local ragCount, dirtyRagCount, otherItems = scanBackpack(backpack)
+            print("[PZ Market] Rag Count: " .. ragCount)
+            print("[PZ Market] Dirty Rag Count: " .. dirtyRagCount)
+            print("[PZ Market] Other Items Count: " .. #otherItems)
 
-            if items:size() == 2 then
-                -- Check if the player wants to query their balance
-                local totalRag = 0
-                local totalRagDirty = 0
-                for j = 0, 1 do
-                    local item = items:get(j)
-                    if item:getName():lower() == "rag" then
-                        totalRag = item:getCount()
-                    elseif item:getName():lower() == "rag (dirty)" then
-                        totalRagDirty = item:getCount()
-                    end
-                end
-
+            if ragCount == 5 and dirtyRagCount == 5 and #otherItems == 0 then
                 -- The player wants to query their balance
-                if totalRag == 20 and totalRagDirty == 20 then
-                    local balance = GetBalance(player)
-                    print("[PZ Market] " .. player:getDisplayName() .. " Balance: " .. balance)
-                    player:sendChatMessage("Balance: " .. tostring(balance)) 
-                end
+                print("[PZ Market] Player " .. player:getDisplayName() .. " wants to check their balance.")
+                local balance = GetBalance(player)
+                print("[PZ Market] " .. player:getDisplayName() .. " Balance: " .. balance)
 
-            elseif items:size() == 3 then
-                -- Check if the player wants to sell or purchase an item
-                local totalRag = 0
-                local totalRagDirty = 0
-                local thirdItem
-                for j = 0, 2 do
-                    local item = items:get(j)
-                    if item:getName():lower() == "rag" then
-                        totalRag = item:getCount()
-                    elseif item:getName():lower() == "rag (dirty)" then
-                        totalRagDirty = item:getCount()
-                    else
-                        thirdItem = item
-                    end
-                end
-
-                if totalRag == 20 and totalRagDirty == 21 then
-                    -- The player wants to sell an item
-                    SellItem(player, thirdItem)
-
-                elseif totalRag == 21 and totalRagDirty == 20 then
-                    -- The player wants to buy an item
-                    BuyItem(player, thirdItem)
-                end
+            elseif ragCount == 6 and dirtyRagCount == 5 and #otherItems == 1 then
+                -- The player wants to sell an item
+                SellItem(player, otherItems:get(0))
+            
+            elseif ragCount == 5 and dirtyRagCount == 6 and #otherItems == 1 then
+                -- The player wants to buy an item
+                BuyItem(player, otherItems:get(0))
             end
         end
     end
