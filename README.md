@@ -23,7 +23,7 @@ To check your balance:
 To sell an item:
 - Put only and exactly 6 rags, 5 dirty rags, and the items you want to sell in your backpack.
 - The backpack must be worn on your back.
-- If the item is not in the prices.lua dictionary, the item will not sell.
+- If an item is not in the prices.lua dictionary, the item will not sell.
 
 To buy an item:
 - Put only and exactly 5 rags, 6 dirty rags, and the item you want to buy in your backpack.

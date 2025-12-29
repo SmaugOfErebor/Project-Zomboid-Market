@@ -28,21 +28,27 @@ end
 Attempts to sell the specified item from the specified player's inventory.
 Will fail if the item does not have a price defined in the dictionary in prices.lua.
 ]]
-function SellItem(player, item)
-    local itemType = item:getFullType()
+function SellItem(player, items)
+    local totalPrice = 0
 
-    -- Ensure that there is a price definition for this item.
-    local price = ItemPrices[itemType] or 0
-    if price <= 0 then
-        print(cmdPrefix .. itemType .. " cannot be sold.")
-        return
+    -- Find all sellable items
+    for i = 1, #items do
+        local item = items[i]
+        local itemType = item:getFullType()
+
+        -- If there is a price definition for this item, it is a valid item to sell.
+        local price = ItemPrices[itemType] or 0
+        if price > 0 then
+            totalPrice = totalPrice + price
+            -- Remove the item from the backpack and imburse the player accordingly.
+            item:getContainer():Remove(item)
+            ModifyBalance(player, price)
+        end
     end
 
-    -- Remove the item from the backpack and imburse the player accordingly.
-    item:getContainer():Remove(item)
-    ModifyBalance(player, price)
-
-    print(cmdPrefix .. "Sold " .. itemType .. " for " .. price .. ".")
+    if totalPrice > 0 then
+        print(cmdPrefix .. "Sold items for a total price of " .. totalPrice .. ".")
+    end
 end
 
 --[[
@@ -124,9 +130,9 @@ Events.EveryTenMinutes.Add(function()
                 local balance = GetBalance(player)
                 print(cmdPrefix .. player:getDisplayName() .. " Balance: " .. balance)
 
-            elseif ragCount == 6 and dirtyRagCount == 5 and #otherItems == 1 then
-                -- The player wants to sell an item (remember that lua arrays start at 1. vomit.emoji)
-                SellItem(player, otherItems[1])
+            elseif ragCount == 6 and dirtyRagCount == 5 and #otherItems >= 1 then
+                -- The player wants to sell an item
+                SellItem(player, otherItems)
 
             elseif ragCount == 5 and dirtyRagCount == 6 and #otherItems == 1 then
                 -- The player wants to buy an item (remember that lua arrays start at 1. vomit.emoji)
