@@ -36,6 +36,12 @@ To buy an item:
 - If the item is not in the prices.lua dictionary, the item will not buy.
 
 # Known Limitations
+- I haven't yet found a way to capture arbitrary data on the server that the player has entered into their client in a vanilla fashion.
+  - Because of this, I use specific rag and dirty rag counts on the backpack to indicate the player's intent to the server.
+  - I've tried capturing chats and capturing text from written notes with no success so far.
+  - Some method of capturing arbitrary data form the client would make this whole project a lot simpler.
+  - Contact me if you have ideas.
+  - Potential idea: ItemContainer.getCustomName() : See line 772 here: https://github.com/PZ-Umbrella/Umbrella/blob/17381967473cc2b40a7878f3c8aebe68210b63e6/library/java/zombie/inventory/ItemContainer.lua#L772
 - Because rags and dirty rags are used to indicate your intentions to the server, you cannot buy or sell these items.
   - These items are very common, so they would be great items to be able to sell.
   - I have ideas on how to fix this.
