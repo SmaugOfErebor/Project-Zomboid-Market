@@ -42,6 +42,9 @@ To buy an item:
   - Some method of capturing arbitrary data form the client would make this whole project a lot simpler.
   - Contact me if you have ideas.
   - Potential idea: ItemContainer.getCustomName() : See line 772 here: https://github.com/PZ-Umbrella/Umbrella/blob/17381967473cc2b40a7878f3c8aebe68210b63e6/library/java/zombie/inventory/ItemContainer.lua#L772
+    - Nope. Calling this method on the backpack throws an exception.
+  - Potential idea: Try to get arbitrary info from getModData() on the backpack.
+    - Nope. getModData() returns an empty dictionary.
 - Because rags and dirty rags are used to indicate your intentions to the server, you cannot buy or sell these items.
   - These items are very common, so they would be great items to be able to sell.
   - I have ideas on how to fix this.
