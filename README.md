@@ -12,7 +12,7 @@ This code is confirmed compatible with Project Zomboid version 42.13.1.
 # Server Setup
 1. Paste the start-server-wrapper.sh file into your server's base directory (the directory with the start-server.sh file).
 2. Paste the market.lua and prices.lua files into your server's <base_directory>/media/lua/server/ directory.
-  - The server automatically runs all lua files in this directory, so we just hijack the server by dropping our files.
+    - The server automatically runs all lua files in this directory, so we just hijack the server by dropping our files.
 3. Start your server using ./start-server-wrapper.sh instead of using ./start-server.sh
 
 # In Game Use
