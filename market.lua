@@ -121,6 +121,11 @@ Events.EveryTenMinutes.Add(function()
     for i = 0, players:size() - 1 do
         local player = players:get(i)
 
+        --[[
+        TODO: Consider scanning the inventory the player is holding in their hand instead.
+        It is far less common for a player to be carrying an inventory in their hand than wearing a backpack.
+        This could reduce server load, not that this is a particularly heavy function.
+        ]]
         local backpack = player:getClothingItem_Back()
         if backpack then
             local ragCount, dirtyRagCount, otherItems = ScanBackpack(backpack)
