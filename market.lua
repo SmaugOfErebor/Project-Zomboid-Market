@@ -1,8 +1,10 @@
 local cmdPrefix = "[PZ Market] "
 print(cmdPrefix .. "Loading the Project Zomboid Market!")
 
--- Returns the currency balance for the specified player.
--- Ensures that the player has currency data.
+--[[
+Returns the currency balance for the specified player.
+Ensures that the player has currency data.
+]]
 function GetBalance(player)
     local data = player:getModData()
     if not data.currency then
@@ -11,7 +13,9 @@ function GetBalance(player)
     return data.currency
 end
 
--- Modifies the given player's currency balance by the specified amount.
+--[[
+Modifies the given player's currency balance by the specified amount.
+]]
 function ModifyBalance(player, amount)
     local data = player:getModData()
     if not data.currency then
@@ -20,7 +24,10 @@ function ModifyBalance(player, amount)
     data.currency = data.currency + amount
 end
 
--- Attempts to sell the specified item from the specified player's inventory.
+--[[
+Attempts to sell the specified item from the specified player's inventory.
+Will fail if the item does not have a price defined in the dictionary in prices.lua.
+]]
 function SellItem(player, item)
     local itemType = item:getFullType()
 
@@ -31,15 +38,17 @@ function SellItem(player, item)
         return
     end
 
-    -- Remove the item from the player's inventory and imburse the player accordingly.
-    local backpack = item:getContainer()
-    backpack:Remove(item)
-
+    -- Remove the item from the backpack and imburse the player accordingly.
+    item:getContainer():Remove(item)
     ModifyBalance(player, price)
+
     print(cmdPrefix .. "Sold " .. itemType .. " for " .. price .. ".")
 end
 
--- Attempts to purchase the specified item for the specified player.
+--[[
+Attempts to purchase the specified item for the specified player.
+Will fail if the item does not have a price defined in the dictionary in prices.lua.
+]]
 function BuyItem(player, item)
     local itemType = item:getFullType()
 
@@ -57,18 +66,19 @@ function BuyItem(player, item)
         return
     end
 
-    -- Add the item to the player's backpack.
-    local backpack = item:getContainer()
+    -- Add the item to the backpack and charge the player accordingly.
     local purchasedItem = player:getInventory():AddItem(itemType)
-    backpack:AddItem(purchasedItem)
-
-    -- Take the corresponding amount of currency from the player's balance.
+    item:getContainer():AddItem(purchasedItem)
     ModifyBalance(player, -price)
+
     print(cmdPrefix .. "Purchased " .. itemType .. " for " .. price)
 end
 
--- Scans a player's backpack for how many rags, dirty rags, and all other item types.
-function scanBackpack(backpack)
+--[[
+Scans a player's backpack for how many rags, dirty rags, and all other item types.
+Used to determine what action the player wants to perform with thge market system.
+]]
+function ScanBackpack(backpack)
     local inv = backpack:getInventory()
     local items = inv:getItems()
 
@@ -92,10 +102,13 @@ function scanBackpack(backpack)
     return ragCount, dirtyRagCount, remainingItems
 end
 
+--[[
+Register this function to run every time ten in-game minutes elapse.
+]]
 Events.EveryTenMinutes.Add(function()
     local players = getOnlinePlayers()
     if not players then
-        return 
+        return
     end
 
     -- Iterate over every online player
@@ -104,7 +117,7 @@ Events.EveryTenMinutes.Add(function()
 
         local backpack = player:getClothingItem_Back()
         if backpack then
-            local ragCount, dirtyRagCount, otherItems = scanBackpack(backpack)
+            local ragCount, dirtyRagCount, otherItems = ScanBackpack(backpack)
 
             if ragCount == 5 and dirtyRagCount == 5 and #otherItems == 0 then
                 -- The player wants to query their balance
@@ -114,7 +127,7 @@ Events.EveryTenMinutes.Add(function()
             elseif ragCount == 6 and dirtyRagCount == 5 and #otherItems == 1 then
                 -- The player wants to sell an item (remember that lua arrays start at 1. vomit.emoji)
                 SellItem(player, otherItems[1])
-            
+
             elseif ragCount == 5 and dirtyRagCount == 6 and #otherItems == 1 then
                 -- The player wants to buy an item (remember that lua arrays start at 1. vomit.emoji)
                 BuyItem(player, otherItems[1])
