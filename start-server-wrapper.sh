@@ -10,10 +10,15 @@ coproc MYPROC { stdbuf -oL ./start-server.sh; }
 while read -r line <&"${MYPROC[0]}"; do
     echo "$line"
     
-    # Check for the trigger text
+    # Check for balance queries.
     if [[ "$line" =~ \[PZ\ Market\]\ ([a-zA-Z0-9_]+)\ Balance:\ ([0-9]+) ]]; then
         playername="${BASH_REMATCH[1]}"
         balance="${BASH_REMATCH[2]}"
         echo "servermsg \"Player $playername Balance: $balance\"" >&"${MYPROC[1]}"
+
+    # Check for informational output.
+    elif [[ "$line" =~ \[PZ\ Market\]\ (.*) ]]; then
+        outputtext="${BASH_REMATCH[1]}"
+        echo "servermsg \"$outputtext\"" >&"${MYPROC[1]}"
     fi
 done

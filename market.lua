@@ -1,4 +1,5 @@
-print("[PZ Market] Loading the Project Zomboid Market!")
+local cmdPrefix = "[PZ Market] "
+print(cmdPrefix .. "Loading the Project Zomboid Market!")
 
 -- Returns the currency balance for the specified player.
 -- Ensures that the player has currency data.
@@ -21,46 +22,49 @@ end
 
 -- Attempts to sell the specified item from the specified player's inventory.
 function SellItem(player, item)
+    local itemType = item:getFullType()
+
     -- Ensure that there is a price definition for this item.
-    local price = ItemPrices[item:getType()] or 0
+    local price = ItemPrices[itemType] or 0
     if price <= 0 then
-        player:sendChatMessage(item:getType() .. " cannot be sold.")
+        print(cmdPrefix .. itemType .. " cannot be sold.")
         return
     end
 
     -- Remove the item from the player's inventory and imburse the player accordingly.
-    item:getContainer():Remove(item)
+    local backpack = item:getContainer()
+    backpack:Remove(item)
+
     ModifyBalance(player, price)
-    player:sendChatMessage("Sold " .. item:getType() .. " for " .. price)
+    print(cmdPrefix .. "Sold " .. itemType .. " for " .. price .. ".")
 end
 
 -- Attempts to purchase the specified item for the specified player.
 function BuyItem(player, item)
+    local itemType = item:getFullType()
+
     -- Ensure that there is a price definition for this item.
-    local price = ItemPrices[item:getType()] or 0
+    local price = ItemPrices[itemType] or 0
     if price <= 0 then
-        player:sendChatMessage(item:getType() .. " cannot be purchased.")
+        print(cmdPrefix .. itemType .. " cannot be purchased.")
         return
     end
 
     -- Ensure that the player actually has the required balance to make the purchase.
     local balance = GetBalance(player)
     if balance < price then
-        player:sendChatMessage("You don't have enough money to purchase " .. item:getType() .. ". Price: " .. price)
+        print(cmdPrefix .. "You don't have enough money to purchase " .. itemType .. ". Price: " .. price)
         return
     end
 
-    -- Attempt to add the item to the player's inventory.
-    local inventory = player:getInventory()
-    local purchasedItem = inventory:AddItem(item:getType())
-    if not purchasedItem then
-        player:sendChatMessage("Failed to add " .. item:getType() .. " to your inventory. You will not be charged.")
-        return
-    end
+    -- Add the item to the player's backpack.
+    local backpack = item:getContainer()
+    local purchasedItem = player:getInventory():AddItem(itemType)
+    backpack:AddItem(purchasedItem)
 
     -- Take the corresponding amount of currency from the player's balance.
     ModifyBalance(player, -price)
-    player:sendChatMessage("Purchased " .. item:getType() .. " for " .. price)
+    print(cmdPrefix .. "Purchased " .. itemType .. " for " .. price)
 end
 
 -- Scans a player's backpack for how many rags, dirty rags, and all other item types.
@@ -94,35 +98,26 @@ Events.EveryTenMinutes.Add(function()
         return 
     end
 
-    print("[PZ Market] Scanning player inventories.")
-
     -- Iterate over every online player
     for i = 0, players:size() - 1 do
         local player = players:get(i)
 
-        print("[PZ Market] Scanning " .. player:getDisplayName() .. "'s inventory.")
-
         local backpack = player:getClothingItem_Back()
         if backpack then
-            print("[PZ Market] Player " .. player:getDisplayName() .. " is wearing a backpack.")
             local ragCount, dirtyRagCount, otherItems = scanBackpack(backpack)
-            print("[PZ Market] Rag Count: " .. ragCount)
-            print("[PZ Market] Dirty Rag Count: " .. dirtyRagCount)
-            print("[PZ Market] Other Items Count: " .. #otherItems)
 
             if ragCount == 5 and dirtyRagCount == 5 and #otherItems == 0 then
                 -- The player wants to query their balance
-                print("[PZ Market] Player " .. player:getDisplayName() .. " wants to check their balance.")
                 local balance = GetBalance(player)
-                print("[PZ Market] " .. player:getDisplayName() .. " Balance: " .. balance)
+                print(cmdPrefix .. player:getDisplayName() .. " Balance: " .. balance)
 
             elseif ragCount == 6 and dirtyRagCount == 5 and #otherItems == 1 then
-                -- The player wants to sell an item
-                SellItem(player, otherItems:get(0))
+                -- The player wants to sell an item (remember that lua arrays start at 1. vomit.emoji)
+                SellItem(player, otherItems[1])
             
             elseif ragCount == 5 and dirtyRagCount == 6 and #otherItems == 1 then
-                -- The player wants to buy an item
-                BuyItem(player, otherItems:get(0))
+                -- The player wants to buy an item (remember that lua arrays start at 1. vomit.emoji)
+                BuyItem(player, otherItems[1])
             end
         end
     end
