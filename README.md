@@ -7,10 +7,13 @@ The purpose of this project is to create an in-game market (buying and selling i
 
 This project must always be able to function with purely vanilla clients.
 
+This code is confirmed compatible with Project Zomboid version 42.13.1.
+
 # Server Setup
-Paste the start-server-wrapper.sh file into your server's base directory (the directory with the start-server.sh file).
-Paste the market.lua and prices.lua files into your server's <base_directory>/media/lua/server/ directory.
-Start your server using ./start-server-wrapper.sh instead of using ./start-server.sh
+1. Paste the start-server-wrapper.sh file into your server's base directory (the directory with the start-server.sh file).
+2. Paste the market.lua and prices.lua files into your server's <base_directory>/media/lua/server/ directory.
+  - The server automatically runs all lua files in this directory, so we just hijack the server by dropping our files.
+3. Start your server using ./start-server-wrapper.sh instead of using ./start-server.sh
 
 # In Game Use
 All actions below will execute every 10 in game minutes.
