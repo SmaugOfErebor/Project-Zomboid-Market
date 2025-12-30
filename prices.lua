@@ -26,6 +26,7 @@ ItemPrices = {
     ["Base.Hat_BaseballCapTINT"] = 1,
     ["Base.Hat_Beany"] = 1,
     ["Base.Hat_SurgicalMask"] = 1,
+    ["Base.IDcard"] = 1,
     ["Base.IDcard_Female"] = 1,
     ["Base.IDcard_Male"] = 1,
     ["Base.IndexCard"] = 1,

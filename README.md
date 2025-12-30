@@ -54,7 +54,7 @@ To buy an item:
   - Contact me if you have ideas.
 - When items are sold from your backpack, your client UI will not necessarily update and it will appear that the items have not sold.
   - I have never seen the UI update automatically before.
-  - Unequipping the backpack will cause the UI to update.
+  - Dropping the backpack will cause the UI to update.
   - Adding and removing a "ghost item" does not cause the client UI to update.
   - I don't have any ideas yet on how to fix this.
   - Contact me if you have ideas.
