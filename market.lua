@@ -28,21 +28,30 @@ end
 Attempts to sell the specified item from the specified player's inventory.
 Will fail if the item does not have a price defined in the dictionary in prices.lua.
 ]]
-function SellItem(player, items)
+function SellItems(player, items)
     local totalPrice = 0
 
     -- Find all sellable items
     for i = 1, #items do
         local item = items[i]
-        local itemType = item:getFullType()
 
-        -- If there is a price definition for this item, it is a valid item to sell.
-        local price = ItemPrices[itemType] or 0
-        if price > 0 then
-            totalPrice = totalPrice + price
-            -- Remove the item from the backpack and imburse the player accordingly.
-            item:getContainer():Remove(item)
-            ModifyBalance(player, price)
+        -- Skip items that have their own inventory, or all items contained will get deleted and the player will not be properly imbursed.
+        -- TODO: Make this function try to sell the items inside items with an inventory.
+        -- Skip drainable items.
+        -- TODO: Come up with values for liquids and allow the selling of items containing liquids.
+        -- Skip weapons because they have durability.
+        -- TODO: Make this function imburse the player with a prorated amount of the item's value based on the remaining durability.
+        if not item.getInventory and not item:IsDrainable() and not item:IsWeapon() then
+            local itemType = item:getFullType()
+
+            -- If there is a price definition for this item, it is a valid item to sell.
+            local price = ItemPrices[itemType] or 0
+            if price > 0 then
+                totalPrice = totalPrice + price
+                -- Remove the item from the backpack and imburse the player accordingly.
+                item:getContainer():Remove(item)
+                ModifyBalance(player, price)
+            end
         end
     end
 
@@ -137,7 +146,7 @@ Events.EveryTenMinutes.Add(function()
 
             elseif ragCount == 6 and dirtyRagCount == 5 and #otherItems >= 1 then
                 -- The player wants to sell an item
-                SellItem(player, otherItems)
+                SellItems(player, otherItems)
 
             elseif ragCount == 5 and dirtyRagCount == 6 and #otherItems == 1 then
                 -- The player wants to buy an item (remember that lua arrays start at 1. vomit.emoji)
