@@ -318,8 +318,23 @@ ItemPrices["Base.WoodenStick2"] = 15
 ItemPrices["Base.WoodenStick_Broken"] = 40
 ItemPrices["Base.WoodenStick_Broken_Nails"] = 40
 ItemPrices["Base.WoodenStick_Nails"] = 80
-ItemPrices["Base.WristWatch_Left_ClassicBlack"] = 1
 ItemPrices["Base.Yarn"] = 4
+
+--[[
+Jewelry
+TODO: Should gemstones have a higher price? They're quite common.
+]]
+ItemPrices["Base.Amethyst"] = 1
+ItemPrices["Base.Bracelet_BangleRightSilver"] = 1
+ItemPrices["Base.Diamond"] = 1
+ItemPrices["Base.Earring_Stud_Silver"] = 1
+ItemPrices["Base.Emerald"] = 1
+ItemPrices["Base.GoldScrap"] = 1
+ItemPrices["Base.Ring_Left_RingFinger_Gold"] = 1
+ItemPrices["Base.Ruby"] = 1
+ItemPrices["Base.Sapphire"] = 1
+ItemPrices["Base.SilverScrap"] = 1
+ItemPrices["Base.WristWatch_Left_ClassicBlack"] = 1
 
 --[[
 Skill Books
