@@ -55,19 +55,28 @@ function SellItems(player, items)
 end
 
 --[[
-Whether this item is sellable.
-Skip items that have their own inventory, and which contain items. Items with empty inventories can be sold.
-TODO: Make this function try to sell the items inside items with an inventory.
-Skip drainable items.
-TODO: Come up with values for liquids and allow the selling of items containing liquids.
-Skip weapons because they have durability.
-TODO: Make this function imburse the player with a prorated amount of the item's value based on the remaining durability.
+Returns whether this item is sellable.
 ]]
 function IsSafeToSell(item)
-    if item.getInventory and item:getInventory():getItems():size() == 0 then
-        return true
+    -- Skip items that have their own inventory, and which contain items. Items with empty inventories can be sold.
+    -- TODO: Make this function try to sell the items inside items with an inventory.
+    if item.getInventory and item:getInventory():getItems():size() > 0 then
+        return false
     end
-    return not item:IsDrainable() and not item:IsWeapon()
+
+    -- Skip drainable items.
+    -- TODO: Come up with values for liquids and allow the selling of items containing liquids.
+    if item:IsDrainable() then
+        return false
+    end
+
+    -- Skip items with condition, which are not at full condition.
+    -- TODO: Make this function imburse the player with a prorated amount of the item's value based on the remaining durability.
+    if item.getCondition and item.getConditionMax and item:getCondition() ~= item:getConditionMax() then
+        return false
+    end
+
+    return true
 end
 
 --[[

@@ -96,6 +96,7 @@ ItemPrices["Base.GuitarAcoustic"] = 60
 ItemPrices["Base.GuitarAcousticNeck_Broken"] = 60
 ItemPrices["Base.GuitarElectricBassNeck_Broken"] = 60
 ItemPrices["Base.GuitarElectricNeck_Broken"] = 60
+ItemPrices["Base.Handbag"] = 1
 ItemPrices["Base.Handle"] = 40
 ItemPrices["Base.Handle_Nails"] = 40
 ItemPrices["Base.HobbyHorse"] = 80
