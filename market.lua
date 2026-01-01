@@ -35,13 +35,7 @@ function SellItems(player, items)
     for i = 1, #items do
         local item = items[i]
 
-        -- Skip items that have their own inventory, or all items contained will get deleted and the player will not be properly imbursed.
-        -- TODO: Make this function try to sell the items inside items with an inventory.
-        -- Skip drainable items.
-        -- TODO: Come up with values for liquids and allow the selling of items containing liquids.
-        -- Skip weapons because they have durability.
-        -- TODO: Make this function imburse the player with a prorated amount of the item's value based on the remaining durability.
-        if not item.getInventory and not item:IsDrainable() and not item:IsWeapon() then
+        if IsSafeToSell(item) then
             local itemType = item:getFullType()
 
             -- If there is a price definition for this item, it is a valid item to sell.
@@ -58,6 +52,22 @@ function SellItems(player, items)
     if totalPrice > 0 then
         print(cmdPrefix .. "Sold items for a total price of " .. totalPrice .. ".")
     end
+end
+
+--[[
+Whether this item is sellable.
+Skip items that have their own inventory, and which contain items. Items with empty inventories can be sold.
+TODO: Make this function try to sell the items inside items with an inventory.
+Skip drainable items.
+TODO: Come up with values for liquids and allow the selling of items containing liquids.
+Skip weapons because they have durability.
+TODO: Make this function imburse the player with a prorated amount of the item's value based on the remaining durability.
+]]
+function IsSafeToSell(item)
+    if item.getInventory and item:getInventory():getItems():size() == 0 then
+        return true
+    end
+    return not item:IsDrainable() and not item:IsWeapon()
 end
 
 --[[
