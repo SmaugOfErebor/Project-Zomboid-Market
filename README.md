@@ -16,28 +16,25 @@ This code is confirmed compatible with Project Zomboid version 42.13.1.
 3. Start your server using ./start-server-wrapper.sh instead of using ./start-server.sh
 
 # In Game Use
-All actions below will execute every 10 in game minutes.
-
-To check your balance:
-- Put only and exactly 5 rags and 5 dirty rags in your backpack.
-- The presence of any other item in the backpack will prevent this from working.
-- The backpack must be worn on your back.
+All actions below will execute every 1 in game minute.
 
 To sell an item:
-- Put only and exactly 6 rags, 5 dirty rags, and the items you want to sell in your backpack.
-- The backpack must be worn on your back.
+- Put the items you want to sell inside a container (such as a backpack).
+- Put that container (the backpack) inside another container (such as a duffel bag).
+- Equip the outer container (the duffel bag) in your primary hand slot.
 - If an item is not in the prices.lua dictionary, the item will not sell.
 
 To buy an item:
-- Put only and exactly 5 rags, 6 dirty rags, and the item you want to buy in your backpack.
+- Put one and only one of the item you want to buy inside a container (such as a backpack).
+- Put that container (the backpack) inside another container (such as a duffel bag).
+- Equipm the outer container (the duffel bag) in your secondary hand slot.
 - You must already have one of an item to purchase another of that item. This is currently necessary, but also prevents the market system from ruining the experience of having to scavenge for items in the game.
-- The presence of any other item in the backpack will prevent this from working.
-- The backpack must be worn on your back.
+- The presence of any other item in the inner container will prevent this from working. This also prevents accidental purchasing of many duplicates.
 - If the item is not in the prices.lua dictionary, the item will not buy.
 
 # Known Limitations
 - I haven't yet found a way to capture arbitrary data on the server that the player has entered into their client in a vanilla fashion.
-  - Because of this, I use specific rag and dirty rag counts on the backpack to indicate the player's intent to the server.
+  - Because of this, I use nested containers ewuipped in specific slots to indicate the player's intent to the server.
   - I've tried capturing chats and capturing text from written notes with no success so far.
   - Some method of capturing arbitrary data form the client would make this whole project a lot simpler.
   - Contact me if you have ideas.
@@ -45,16 +42,16 @@ To buy an item:
     - Nope. Calling this method on the backpack throws an exception.
   - Potential idea: Try to get arbitrary info from getModData() on the backpack.
     - Nope. getModData() returns an empty dictionary.
-- Because rags and dirty rags are used to indicate your intentions to the server, you cannot buy or sell these items.
-  - These items are very common, so they would be great items to be able to sell.
-  - I have ideas on how to fix this.
 - All server communications are sent to all players.
   - This could be moderately annoying for small servers and extremely annoying for large servers.
   - I don't have any ideas yet on how to fix this.
   - Contact me if you have ideas.
-- When items are sold from your backpack, your client UI will not necessarily update and it will appear that the items have not sold.
+- When items are sold, your client UI will not necessarily update and it will appear that the items have not sold.
   - I have never seen the UI update automatically before.
-  - Dropping the backpack will cause the UI to update.
+  - Dropping the container will cause the UI to update.
   - Adding and removing a "ghost item" does not cause the client UI to update.
   - I don't have any ideas yet on how to fix this.
   - Contact me if you have ideas.
+- Many of an item cannot currently be purchased simultaneously.
+  - This is inconvenient for items that you may want to purchase many of at once, such as nails.
+  - I have some ideas on how to implement this.

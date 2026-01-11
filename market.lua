@@ -25,45 +25,98 @@ function ModifyBalance(player, amount)
 end
 
 --[[
-Attempts to sell the specified item from the specified player's inventory.
-Will fail if the item does not have a price defined in the dictionary in prices.lua.
+Trie to perform a sale operation for the given player.
+To sell items, the player must have an item with an inventory that contains an item with an inventory equipped to the primary hand slot.
+Example: Equip a duffel bag containing a backpack containing junk items to sell to the primary hand slot.
 ]]
-function SellItems(player, items)
+function TrySell(player)
+    -- Ensure that the player has an item equipped in the primary slot.
+    local handItem = player:getPrimaryHandItem()
+    if not handItem then
+        return
+    end
+
+    -- Ensure that the equipped item has an inventory.
+    if not handItem.getInventory then
+        return
+    end
+    local inv = handItem:getInventory()
+    if not inv then
+        return
+    end
+
+    -- Only sell items from inside an inner inventory.
     local totalPrice = 0
-
-    -- Find all sellable items
-    for i = 1, #items do
-        local item = items[i]
-
-        if IsSafeToSell(item) then
-            local itemType = item:getFullType()
-
-            -- If there is a price definition for this item, it is a valid item to sell.
-            local price = ItemPrices[itemType] or 0
-            if price > 0 then
-                totalPrice = totalPrice + price
-                -- Remove the item from the backpack and imburse the player accordingly.
-                item:getContainer():Remove(item)
-                ModifyBalance(player, price)
-            end
+    local items = inv:getItems()
+    for i = 0, items:size() - 1 do
+        local item = items:get(i)
+        if item and item.getInventory then
+            totalPrice = totalPrice + SellItems(player, item:getInventory():getItems())
         end
     end
 
     if totalPrice > 0 then
-        print(cmdPrefix .. "Sold items for a total price of " .. totalPrice .. ".")
+        print(cmdPrefix .. player:getDisplayName() .. " Sold items for a total of: " .. totalPrice .. " New balance: " .. GetBalance(player))
     end
 end
 
 --[[
-Returns whether this item is sellable.
+Attempts to sell the given array of items.
+Items without a price defined in the dictionary in prices.lua will not be sold.
 ]]
-function IsSafeToSell(item)
-    -- Skip items that have their own inventory, and which contain items. Items with empty inventories can be sold.
-    -- TODO: Make this function try to sell the items inside items with an inventory.
-    if item.getInventory and item:getInventory():getItems():size() > 0 then
-        return false
+function SellItems(player, items)
+    local totalPrice = 0
+
+    -- Iterate backwards because the loop attempts to modify the collection.
+    for i = items:size() - 1, 0, -1 do
+        local item = items:get(i)
+
+        if item then
+            if item.getInventory then
+                -- This item has an inventory, try to sell inner items first.
+                totalPrice = totalPrice + SellItems(player, item:getInventory():getItems())
+                -- If all inner items sold, try to sell the container item too.
+                if item:getInventory():getItems():size() == 0 then
+                    totalPrice = totalPrice + SellItem(player, item)
+                end
+
+            else
+                -- If this item does not have an inventory, just try to sell it.
+                totalPrice = totalPrice + SellItem(player, item)
+            end
+        end
     end
 
+    return totalPrice
+end
+
+--[[
+Attempts to sell the given item.
+Items without a price defined in the dictionary in prices.lua will not be sold.
+]]
+function SellItem(player, item)
+    if not CanSell(item) then
+        return 0
+    end
+
+    -- If there is no price definition for this item, it cannot be sold.
+    local price = ItemPrices[item:getFullType()] or 0
+    if price <= 0 then
+        return 0
+    end
+
+    -- Remove the item from the backpack and imburse the player accordingly.
+    item:getContainer():Remove(item)
+    ModifyBalance(player, price)
+
+    return price
+end
+
+--[[
+Returns whether this item is sellable.
+This method will eventually be removed entirely once drainable items and items with condition can be sold.
+]]
+function CanSell(item)
     -- Skip drainable items.
     -- TODO: Come up with values for liquids and allow the selling of items containing liquids.
     if item:IsDrainable() then
@@ -80,23 +133,56 @@ function IsSafeToSell(item)
 end
 
 --[[
-Attempts to purchase the specified item for the specified player.
-Will fail if the item does not have a price defined in the dictionary in prices.lua.
+Trie to perform a purchase operation for the given player.
+To purchase an item, the player must have an item with an inventory containing an item with an inventory containing a single item equipped to the secondary hand slot.
+Example: Equip a duffel bag containing a backpack containing the item to purchase to the primary hand slot.
 ]]
-function BuyItem(player, item)
-    local itemType = item:getFullType()
+function TryPurchase(player)
+    -- Ensure that the player has an item equipped in the secondary slot.
+    local handItem = player:getSecondaryHandItem()
+    if not handItem then
+        return
+    end
 
+    -- Ensure that the equipped item has an inventory.
+    if not handItem.getInventory then
+        return
+    end
+
+    local outerInv = handItem:getInventory()
+    if not outerInv then
+        return
+    end
+
+    -- Only purchase items from inside an inner inventory.
+    local outerItems = outerInv:getItems()
+    for i = 0, outerItems:size() - 1 do
+        local outerItem = outerItems:get(i)
+        if outerItem.getInventory then
+            -- There must be only a single item in the inner inventory to know what is intended to be purchased.
+            local innerItems = outerItem:getInventory():getItems()
+            if innerItems:size() == 1 then
+                Purchase(player, innerItems:get(0))
+            end
+        end
+    end
+end
+
+--[[
+Attempts to purchase the specified item for the specified player.
+Items without a price defined in the dictionary in prices.lua will not be purchased.
+]]
+function Purchase(player, item)
     -- Ensure that there is a price definition for this item.
+    local itemType = item:getFullType()
     local price = ItemPrices[itemType] or 0
     if price <= 0 then
-        print(cmdPrefix .. itemType .. " cannot be purchased.")
         return
     end
 
     -- Ensure that the player actually has the required balance to make the purchase.
     local balance = GetBalance(player)
     if balance < price then
-        print(cmdPrefix .. "You don't have enough money to purchase " .. itemType .. ". Price: " .. price)
         return
     end
 
@@ -105,72 +191,17 @@ function BuyItem(player, item)
     item:getContainer():AddItem(purchasedItem)
     ModifyBalance(player, -price)
 
-    print(cmdPrefix .. "Purchased " .. itemType .. " for " .. price)
+    print(cmdPrefix ..player:getDisplayName() .. " Purchased " .. itemType .. " for:" .. price .. " New balance: " .. GetBalance(player))
 end
 
 --[[
-Scans a player's backpack for how many rags, dirty rags, and all other item types.
-Used to determine what action the player wants to perform with thge market system.
+Register this function to run every time one in-game minute elapses.
 ]]
-function ScanBackpack(backpack)
-    local inv = backpack:getInventory()
-    local items = inv:getItems()
-
-    local ragCount = 0
-    local dirtyRagCount = 0
-    local remainingItems = {}
-
-    for i = 0, items:size() - 1 do
-        local item = items:get(i)
-        local fullType = item:getFullType()
-
-        if fullType == "Base.RippedSheets" then
-            ragCount = ragCount + 1
-        elseif fullType == "Base.RippedSheetsDirty" then
-            dirtyRagCount = dirtyRagCount + 1
-        else
-            table.insert(remainingItems, item)
-        end
-    end
-
-    return ragCount, dirtyRagCount, remainingItems
-end
-
---[[
-Register this function to run every time ten in-game minutes elapse.
-]]
-Events.EveryTenMinutes.Add(function()
+Events.EveryOneMinute.Add(function()
     local players = getOnlinePlayers()
-    if not players then
-        return
-    end
-
-    -- Iterate over every online player
     for i = 0, players:size() - 1 do
         local player = players:get(i)
-
-        --[[
-        TODO: Consider scanning the inventory the player is holding in their hand instead.
-        It is far less common for a player to be carrying an inventory in their hand than wearing a backpack.
-        This could reduce server load, not that this is a particularly heavy function.
-        ]]
-        local backpack = player:getClothingItem_Back()
-        if backpack then
-            local ragCount, dirtyRagCount, otherItems = ScanBackpack(backpack)
-
-            if ragCount == 5 and dirtyRagCount == 5 and #otherItems == 0 then
-                -- The player wants to query their balance
-                local balance = GetBalance(player)
-                print(cmdPrefix .. player:getDisplayName() .. " Balance: " .. balance)
-
-            elseif ragCount == 6 and dirtyRagCount == 5 and #otherItems >= 1 then
-                -- The player wants to sell an item
-                SellItems(player, otherItems)
-
-            elseif ragCount == 5 and dirtyRagCount == 6 and #otherItems == 1 then
-                -- The player wants to buy an item (remember that lua arrays start at 1. vomit.emoji)
-                BuyItem(player, otherItems[1])
-            end
-        end
+        TrySell(player)
+        TryPurchase(player)
     end
 end)
